@@ -10889,7 +10889,7 @@ public class Client extends RSApplet {
 		}
 		if (TextUtil.validName(myUsername) && TextUtil.validPassword(myPassword)) {
 			loginFailures = 0;
-			
+
 			login(myUsername, myPassword, false);
 			if (!SettingsManager.savedUsername.equals(myUsername)
 					|| !SettingsManager.savedPassword.equals(myPassword)) {
