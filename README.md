@@ -24,5 +24,5 @@ The following features are currently implemented:
 
  - Space bar to continue dialogue
  - Dropped items displayed with name and amount (can turn off/on in settings.ini)
- - Bank searching
+ - Bank searching [example here](https://streamable.com/j8nuw)
  - Real time NPC HP View
