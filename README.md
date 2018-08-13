@@ -2,6 +2,8 @@
 
 Hey, here you will find the source code of my custom vscape client with some QoL features that you might find useful. with each new feature I will upload a binary file you can use, however feel free to compile from source and it will be exactly the same.
 
+My 4chan tripcode is: Client guy !!wTgwg6w+iTN
+
 # Compiling
 In order to compile from source you will need a Java IDE, I am using IntelliJ IDEA, however you can use anything.
 
