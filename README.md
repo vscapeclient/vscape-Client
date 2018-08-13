@@ -26,3 +26,7 @@ The following features are currently implemented:
  - Dropped items displayed with name and amount (can turn off/on in settings.ini)
  - Bank searching [example here](https://streamable.com/j8nuw)
  - Real time NPC HP View
+
+# FAQ
+
+ - Why does this client compile to be larger than the official vscape client? - The reason the client is larger than the vscape client is due to an additionally loaded library called gson-2.8.0.jar, this is an official library from Google themselves that allows parsing and working with JSON files. The reason this library is needed is for the loading of NPC Definitions for the HP View.
