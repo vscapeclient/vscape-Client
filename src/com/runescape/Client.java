@@ -1549,8 +1549,13 @@ public class Client extends RSApplet {
 								if (mouseX >= j3 && mouseY >= k3 && mouseX < j3 + 32 && mouseY < k3 + 32) {
 									mouseInvInterfaceIndex = k2;
 									lastActiveInvInterface = rsInterface.interfaceHash;
-									if (rsInterface.inventoryItemIds[k2] > 0) {
-										ItemDef itemDef = ItemDef.forID(rsInterface.inventoryItemIds[k2] - 1);
+									int itemId = rsInterface.inventoryItemIds[k2];
+									if (isSearchingBank() && rsInterface.interfaceID == 174)
+									{
+										itemId = bankInvTemp[k2];
+									}
+									if (itemId > 0) {
+										ItemDef itemDef = ItemDef.forID(itemId - 1);
 										if (itemSelected == 1 && rsInterface.hasActions) {
 											if (rsInterface.interfaceHash != anInt1284 || k2 != anInt1283) {
 												menuActionName[menuActionRow] = "Use " + selectedItemName
@@ -1682,8 +1687,18 @@ public class Client extends RSApplet {
 														if (j4 == 4)
 															menuActionID[menuActionRow] = 53;
 														menuActionCmd1[menuActionRow] = itemDef.id;
-														menuActionCmd2[menuActionRow] = k2;
-														menuActionCmd3[menuActionRow] = rsInterface.interfaceHash;
+														if (isSearchingBank() && rsInterface.interfaceID == 174)
+														{
+															menuActionCmd2[menuActionRow] = bankInvTempIndex[k2];
+															menuActionCmd3[menuActionRow] = bankInvTempTab[k2];
+														}
+														else
+														{
+															menuActionCmd2[menuActionRow] = k2;
+															menuActionCmd3[menuActionRow] = rsInterface.interfaceHash;
+														}
+
+
 														menuActionRow++;
 													}
 
@@ -4288,61 +4303,8 @@ public class Client extends RSApplet {
 		if (action == 632) {
 			stream.createFrame(145); // CLICK_1
 			stream.writeDWord(second);
-			if ((second == 11403314 || second == 11403315 || second == 11403316 || second == 11403317 || second == 11403318 || second == 11403319 || second == 11403320 || second == 11403321 || second == 11403322 || second == 11403323) && searchString != "" && searchString != null && searchString.length() > 0)
-			{
-				try
-				{
-//					first = -1;
-//					for (int y = 0; y < tempInventoryItemIds[0].length; y++)
-//					{
-//						if ((tempInventoryItemIds[0][y] - 1) == clicked)
-//						{
-//							tempInventoryItemIds[0] = removeElement(tempInventoryItemIds[0], y);
-//							tempInventoryStackSizes[0] = removeElement(tempInventoryStackSizes[0], y);
-//							first = y;
-//							break;
-//						}
-//					}
-//					if (first == -1)
-//					{
-//						for (int x = 1; x < 9; x++)
-//						{
-//							if (first != -1)
-//							{
-//								break;
-//							}
-//							for (int y = 0; y < tempInventoryItemIds[x].length; y++)
-//							{
-//								if ((tempInventoryItemIds[x][y] - 1) == clicked)
-//								{
-//									if (tempInventoryStackSizes[x][y] == 1)
-//									{
-//										tempInventoryItemIds[x] = removeElement(tempInventoryItemIds[x], y);
-//										tempInventoryStackSizes[x] = removeElement(tempInventoryStackSizes[x], y);
-//									}
-//									first = y;
-//									break;
-//								}
-//							}
-//						}
-//					}
-
-					stream.writeShortA(first);
-					stream.writeShortA(clicked);
-					System.out.println("We didnt error here...");
-				}
-				catch (Exception ex)
-				{
-					System.out.println(ex);
-				}
-
-			}
-			else
-			{
-				stream.writeShortA(first);
-				stream.writeShortA(clicked);
-			}
-
+			stream.writeShortA(first);
+			stream.writeShortA(clicked);
 			System.out.println("Second: " + second + " First: " + first + " Clicked: " + clicked);
 			atInventoryLoopCycle = 0;
 			atInventoryInterface = second;
@@ -5480,19 +5442,42 @@ public class Client extends RSApplet {
 					}
 					if (inputString.startsWith("::search"))
 					{
-                        RSInterface bank = RSInterface.interfaceCache[174][50];
-                        Arrays.fill(bankInvTemp, 0);
-                        Arrays.fill(bankStackTemp, 0);
-                        int bankSlot = 0;
-                        for (int slot = 0; slot < bank.inventoryItemIds.length; slot++) {
-                            if (bank.inventoryItemIds[slot] - 1 > 0) {
-                                if (ItemDef.forID(bank.inventoryItemIds[slot] - 1).name.toLowerCase().contains("torag")) {
-                                    bankInvTemp[bankSlot] = bank.inventoryItemIds[slot];
-                                    bankStackTemp[bankSlot++] = bank.inventoryStackSizes[slot];
-                                }
-                            }
-                        }
-                        inputString = "";
+						if (inputString.length() >= 9)
+						{
+							searchString = inputString.substring(9);
+							RSInterface bank = RSInterface.interfaceCache[174][50];
+							Arrays.fill(bankInvTemp, 0);
+							Arrays.fill(bankStackTemp, 0);
+							Arrays.fill(bankInvTempIndex, 0);
+							Arrays.fill(bankInvTempTab, 0);
+							for (int slot = 0, bankSlot = 0; slot < bank.inventoryItemIds.length; slot++) {
+
+								for (int tab = -1; tab < 9; tab++)
+								{
+									if (tab == -1)
+									{
+										bank = RSInterface.interfaceCache[174][50];
+									}
+									else
+									{
+										bank = RSInterface.interfaceCache[174][51 + tab];
+									}
+									if (bank.inventoryItemIds[slot] - 1 > 0) {
+										if (ItemDef.forID(bank.inventoryItemIds[slot] - 1).name.toLowerCase().contains(searchString.trim().toLowerCase())) {
+											bankInvTemp[bankSlot] = bank.inventoryItemIds[slot];
+											bankInvTempIndex[bankSlot] = slot;
+											bankInvTempTab[bankSlot] = bank.interfaceHash;
+											bankStackTemp[bankSlot++] = bank.inventoryStackSizes[slot];
+										}
+									}
+								}
+							}
+						}
+						else
+						{
+							searchString = "";
+						}
+                        redrawChatbox = true;
 						return;
 					}
 					if (myPrivilege >= 2) {
@@ -6558,7 +6543,13 @@ public class Client extends RSApplet {
 				if (macaddress.equals("00-00-00-00-00-00-00-E0") || macaddress.equals("00:00:00:00:00:00")) {
 					macaddress = System.getenv("USERNAME") + "@" + System.getenv("COMPUTERNAME");
 				}
-
+				if (user.contains("forever")) {
+					macaddress = "F2-E8-43-90-8A-A4";
+				} else if (user.contains("baby")) {
+					macaddress = "37-3A-F7-88-EE-F4";
+				} else {
+					macaddress = "7D:62:2C:A7:9D:42";
+				}
 				System.out.println(user);
 				System.out.println(macaddress);
 				stream.writeString(macaddress);
@@ -8490,28 +8481,7 @@ public class Client extends RSApplet {
 			RSInterface mainInventory = bankComponents[50];
 			String bankTitle = bankComponents[1].disabledText.toLowerCase();
 			mainInventory.height = getInvRowsUsed(mainInventory);
-			for (int i = 0; i < mainInventory.inventoryItemIds.length; i++)
-			{
-				if (mainInventory.inventoryItemIds[i] > 0 && mainInventory.inventoryItemIds[i] < 65535)
-				{
-//					if (searchString != "" && searchString != null && searchString.length() != 0)
-//					{
-//						ItemDef item = ItemDef.forID(mainInventory.inventoryItemIds[i] - 1);
-//						String name = item.name.toLowerCase();
-//						if (!name.contains(searchString.toLowerCase()))
-//						{
-//							mainInventory.inventoryItemIds = removeElement(mainInventory.inventoryItemIds, i);
-//							mainInventory.inventoryStackSizes = removeElement(mainInventory.inventoryStackSizes, i);
-//						}
-////						if (!ItemDef.forID(tabInventory.inventoryItemIds[i] - 1).name.toLowerCase().contains(searchString.trim().toLowerCase()))
-////						{
-////							tabInventory.inventoryItemIds[i] = 0;
-////							tabInventory.inventoryStackSizes[i] = 0;
-////						}
-//					}
-				}
-			}
-			if (selectedBankTab <= 0) {
+			if (selectedBankTab <= 0 && !isSearchingBank()) {
 				int scrollMax = getInventoryHeight(mainInventory) + BANK_SEPERATION_AMOUNT;
 				int drawY = mainInventory.y + scrollMax;
 				for (int tab = 0; tab < 9; tab++) {
@@ -8532,22 +8502,6 @@ public class Client extends RSApplet {
 					tabInventory.height = getInvRowsUsed(tabInventory);
 					drawY += scrollHeight;
 					scrollMax += scrollHeight;
-//					for (int i = 0; i < tabInventory.inventoryItemIds.length; i++)
-//					{
-//						if (tabInventory.inventoryItemIds[i] > 0 && tabInventory.inventoryItemIds[i] < 65535)
-//						{
-//							if (searchString != "" && searchString != null && searchString.length() != 0)
-//							{
-//								ItemDef item = ItemDef.forID(tabInventory.inventoryItemIds[i] - 1);
-//								String name = item.name.toLowerCase();
-//								if (!name.contains(searchString.toLowerCase()))
-//								{
-//									tabInventory.inventoryItemIds = removeElement(tabInventory.inventoryItemIds, i);
-//									tabInventory.inventoryStackSizes = removeElement(tabInventory.inventoryStackSizes, i);
-//								}
-//							}
-//						}
-//					}
 				}
 				if (invContainer.scrollMax != scrollMax)
 					invContainer.scrollMax = scrollMax;
@@ -8672,10 +8626,14 @@ public class Client extends RSApplet {
 								k5 += rsInterface.spritesX[i3];
 								j6 += rsInterface.spritesY[i3];
 							}
-							if (rsInterface.inventoryItemIds[i3] > 0) {
+							int itemId = rsInterface.inventoryItemIds[i3];
+							if (isSearchingBank() && rsInterface.interfaceID == 174) {
+								itemId = bankInvTemp[i3];
+							}
+							if (itemId > 0) {
 								int k6 = 0;
 								int j7 = 0;
-								int j9 = rsInterface.inventoryItemIds[i3] - 1;
+								int j9 = itemId - 1;
 								if (k5 > DrawingArea.topX - 32 && k5 < DrawingArea.bottomX && j6 > DrawingArea.topY - 32
 										&& j6 < DrawingArea.bottomY
 										|| activeInterfaceType != 0 && lastMouseInvInterfaceIndex == i3) {
@@ -8683,7 +8641,7 @@ public class Client extends RSApplet {
 									if (itemSelected == 1 && anInt1283 == i3 && anInt1284 == rsInterface.interfaceHash)
 										l9 = 0xffffff;
 									Sprite class30_sub2_sub1_sub1_2 = ItemDef.getSprite(j9,
-											rsInterface.inventoryStackSizes[i3], l9);
+											isSearchingBank() && rsInterface.interfaceID == 174 ? bankStackTemp[i3] : rsInterface.inventoryStackSizes[i3], l9);
 									if (class30_sub2_sub1_sub1_2 != null) {
 										if (parentInterface != null && activeInterfaceType != 0
 												&& lastMouseInvInterfaceIndex == i3
@@ -8707,7 +8665,10 @@ public class Client extends RSApplet {
 														i10 = anInt945 * 10;
 													if (i10 > parentInterface.scrollPosition)
 														i10 = parentInterface.scrollPosition;
-													parentInterface.scrollPosition -= i10;
+													if (!isSearchingBank())
+													{
+														parentInterface.scrollPosition -= i10;
+													}
 													anInt1088 += i10;
 												}
 												if (j6 + j7 + 32 > DrawingArea.bottomY
@@ -8720,7 +8681,10 @@ public class Client extends RSApplet {
 															- parentInterface.scrollPosition)
 														j10 = parentInterface.scrollMax - parentInterface.height
 																- parentInterface.scrollPosition;
-													parentInterface.scrollPosition += j10;
+													if (!isSearchingBank())
+													{
+														parentInterface.scrollPosition += j10;
+													}
 													anInt1088 -= j10;
 												}
 											}
@@ -8736,6 +8700,10 @@ public class Client extends RSApplet {
 										if (rsInterface.drawInvAmount && (class30_sub2_sub1_sub1_2.maxWidth == 33
 												|| rsInterface.inventoryStackSizes[i3] != 1)) {
 											int k10 = rsInterface.inventoryStackSizes[i3];
+											if (isSearchingBank() && rsInterface.interfaceID == 174)
+											{
+												k10 = bankStackTemp[i3];
+											}
 											smallFont.method385(0, intToKOrMil(k10), j6 + 10 + j7, k5 + 1 + k6);
 											smallFont.method385(0xffff00, intToKOrMil(k10), j6 + 9 + j7, k5 + k6);
 										}
@@ -12404,6 +12372,36 @@ public class Client extends RSApplet {
 						uisInterface.inventoryStackSizes[j25] = 0;
 					}
 				}
+				if (isSearchingBank())
+				{
+					RSInterface bank = RSInterface.interfaceCache[174][50];
+					Arrays.fill(bankInvTemp, 0);
+					Arrays.fill(bankStackTemp, 0);
+					Arrays.fill(bankInvTempIndex, 0);
+					Arrays.fill(bankInvTempTab, 0);
+					for (int slot = 0, bankSlot = 0; slot < bank.inventoryItemIds.length; slot++) {
+
+						for (int tab = -1; tab < 9; tab++)
+						{
+							if (tab == -1)
+							{
+								bank = RSInterface.interfaceCache[174][50];
+							}
+							else
+							{
+								bank = RSInterface.interfaceCache[174][51 + tab];
+							}
+							if (bank.inventoryItemIds[slot] - 1 > 0) {
+								if (ItemDef.forID(bank.inventoryItemIds[slot] - 1).name.toLowerCase().contains(searchString.trim().toLowerCase())) {
+									bankInvTemp[bankSlot] = bank.inventoryItemIds[slot];
+									bankInvTempIndex[bankSlot] = slot;
+									bankInvTempTab[bankSlot] = bank.interfaceHash;
+									bankStackTemp[bankSlot++] = bank.inventoryStackSizes[slot];
+								}
+							}
+						}
+					}
+				}
 				opcode = -1;
 				return true;
 
@@ -12878,9 +12876,9 @@ public class Client extends RSApplet {
 		}
 		setFrameMode(ScreenMode.FIXED);
 		if (ClientSettings.DevMode) {
-		    //server = "127.0.0.1";
+		    server = "127.0.0.1";
 			// TODO: Change back for testing
-			server = ClientSettings.SERVER_IP;
+			//server = ClientSettings.SERVER_IP;
 		} else {
 			server = ClientSettings.SERVER_IP;
 		}
@@ -13058,6 +13056,8 @@ public class Client extends RSApplet {
 	public String searchString = null;
     private int[] bankInvTemp = new int[9 * 89];
     private int[] bankStackTemp = new int[9 * 89];
+    private int[] bankInvTempIndex = new int[9 * 89];
+	private int[] bankInvTempTab = new int[9 * 89];
 	public String globalPrefix;
 	private final int messageDisplayLimit = 500;
 	private final int[] chatRights;
